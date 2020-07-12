@@ -16,6 +16,8 @@ In order to identify a game, send the game abbreviation from speedrun.com. For i
 
 You must only mention one channel in your message. However, you can include more than one game. If you want to remove a game, add a `!` before the game abbreviation, like `!alttp`.
 
+**Important Note:** Only server owners can set up RUN GET.
+
 ## Problems?
 
 Submit an issue on [GitHub](https://github.com/slashinfty/run-get/issues/new). If the bot is down for an extended time, reach out to [dad infinitum](https://twitter.com/_dadinfinitum) on Twitter.
