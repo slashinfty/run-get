@@ -16,7 +16,7 @@ In order to identify a game, send the game abbreviation from speedrun.com. For i
 
 You must only mention one channel in your message. However, you can include more than one game. If you want to remove a game, add a `!` before the game abbreviation, like `!alttp`.
 
-**Important Note:** Only server owners can set up RUN GET.
+**Important Note:** Only server owners can set up RUN GET. Additionally, make sure the bot has permission to send embeds.
 
 ## Problems?
 
