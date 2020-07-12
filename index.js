@@ -76,7 +76,7 @@ client.on('message', async message => {
   // Message must mention the bot, be from the server owner, and mention exactly 1 channel
   if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 1) {
     // The game abbreviations included in the message
-    const gameAbbreviationArray = message.content.match(/\b(?<!\<)\w+(?!\>)\b/g);
+    const gameAbbreviationArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b/g);
     if (gameAbbreviationArray.length === 0) message.reply('No game abbreviation in message.');
     else {
       // The mentioned channel
@@ -104,7 +104,7 @@ client.on('message', async message => {
             return;
           }
           // Remove server from list
-          servers.splice(servers.indexOf(server), 1);
+          servers.splice(servers.indexOf(foundServer), 1);
           message.reply('No longer watching for ' + gameObject.data[0].names.international + ' in ' + channelObj.name);
           // Update list of servers
           serverUpdate();
