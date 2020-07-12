@@ -1,5 +1,3 @@
-# RUN GET
-
 [Invite](https://discordapp.com/oauth2/authorize?client_id=731961127239680051&scope=bot) the bot to your Discord server.
 
 ## What It Does
