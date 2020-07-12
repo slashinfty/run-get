@@ -1,0 +1,13 @@
+{
+  "name": "run-get",
+  "version": "1.0.0",
+  "description": "A Discord bot that fetches recently verified runs for any game",
+  "main": "index.js",
+  "repository": "git@github.com:slashinfty/run-get.git",
+  "author": "slashinfty <matt.braddock@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^12.2.0",
+    "node-fetch": "^2.6.0"
+  }
+}
