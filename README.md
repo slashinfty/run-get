@@ -6,13 +6,13 @@
 
 It sends information on recently verified speedruns for any game (on speedrun.com) that you pick.
 
-image
+![Screenshot of embed](static/screenshot2.png)
 
 ## Set Up
 
 Once RUN GET is in your server, you need to assign it a channel to send messages to, and tell it one or more games to watch. Simply send a message mentioning RUN GET, mention the channel you want RUN GET to post in, and any number of games you want it to watch.
 
-image
+![Screenshot of setup](static/screenshot1.png)
 
 In order to identify a game, send the game abbreviation from speedrun.com. For instance, if you want RUN GET to watch for new The Legend of Zelda: A Link to the Past runs, and you know the leaderboard is `https://www.speedrun.com/alttp`, then you'd use `alttp`.
 

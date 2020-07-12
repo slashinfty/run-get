@@ -6,7 +6,7 @@ const Discord = require('discord.js');
 
 const client = new Discord.Client();
 // Uncomment line below after inserting bot token
-//client.login('ENTER TOKEN HERE');
+//client.login('TOKEN');
 
 // Time of first run at last query
 let compareTime;
@@ -48,7 +48,7 @@ client.once('ready', () => {
   // Set Discord status
   client.user.setPresence({
     activity: {
-      name: 'for ?rungethelp',
+      name: '?rungethelp',
       type: 'LISTENING'
     },
     status: 'dnd'
@@ -66,7 +66,7 @@ client.once('ready', () => {
   servers = JSON.parse(contents).servers;
   const rawGames = servers.map(s => s.game);
   games = [...new Set(rawGames)];
-}
+});
 
 // Messages to add game watch to a server
 client.on('message', async message => {
@@ -95,7 +95,7 @@ client.on('message', async message => {
         }
         const gameID = gameObject.data[0].id;
         // Grabbing server information if already watching for the game
-        const foundServer = servers.find(s => s.server === message.guild.id && s.channel === channelObj.id && game === gameID);
+        const foundServer = servers.find(s => s.server === message.guild.id && s.channel === channelObj.id && s.game === gameID);
         // Check if removing
         if (gameAbbreviationArray[i].startsWith('!')) {
           // If not watching for the game in the channel
@@ -143,7 +143,7 @@ client.on('guildDelete', guild => {
 // The core function - 6e4 for timeout
 client.setInterval(async () => {
   // Get 20 most recent verified runs
-  const recentRunsResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=verified&orderby=verify-date&direction=desc&embed=game,category.variables,platform,players`);
+  const recentRunsResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=verified&orderby=verify-date&direction=desc&embed=game,category.variables,players`);
   const recentRunsObject = await recentRunsResponse.json();
   const recentRuns = recentRunsObject.data;
   let newCompareTime;
@@ -153,7 +153,7 @@ client.setInterval(async () => {
     const verifyTime = await new Date(thisRun.status['verify-date']);
     // Update time to check if it's the first run
     if (i === 0) {
-      if (checkTime === undefined) compareTime = verifyTime;
+      if (compareTime === undefined) compareTime = verifyTime;
       newCompareTime = verifyTime;
     }
     // If the run was before last first checked run, quit (but update time!)
