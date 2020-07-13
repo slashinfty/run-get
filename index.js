@@ -82,7 +82,7 @@ client.on('message', async message => {
     let replyString = 'Currently watching:\n';
     for (let i = 0; i < gamesArray; i++) {
       replyString += i === 0 ? gamesArray[i].gameName : '\n' + gamesArray[i].gameName;
-      replyString += message.content.endsWith('!') ? ' in ' gamesArray[i].channelName : '';
+      replyString += message.content.endsWith('!') ? ' in ' + gamesArray[i].channelName : '';
     }
     message.reply(replyString);
   }
