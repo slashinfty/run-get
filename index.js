@@ -186,5 +186,5 @@ client.setInterval(async () => {
     }
   }
   // Update time to check
-  compareTime = newCompareTimel
+  compareTime = newCompareTime;
 }, 6e4); // 60 seconds
