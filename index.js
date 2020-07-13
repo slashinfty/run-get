@@ -3,10 +3,10 @@ const path = require('path');
 const qs = require('querystring');
 const fetch = require('node-fetch');
 const Discord = require('discord.js');
+const config = require("./config.js");
 
 const client = new Discord.Client();
-// Uncomment line below after inserting bot token
-//client.login('TOKEN');
+client.login(config.token);
 
 // Time of first run at last query
 let compareTime;
