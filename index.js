@@ -73,6 +73,20 @@ client.on('message', async message => {
   // Help reply
   if (message.content === '?rungethelp') message.reply('Need help with RUN GET? https://slashinfty.github.io/run-get');
   
+  if (message.content === '?rungetgames' || message.content === '?rungetgames!') {
+    const gamesArray = servers.filter(s => s.server === message.guild.id);
+    if (gamesArray.length === 0) {
+      message.reply('Not currently watching any games.');
+      return;
+    }
+    let replyString = 'Currently watching:\n';
+    for (let i = 0; i < gamesArray; i++) {
+      replyString += i === 0 ? gamesArray[i].gameName : '\n' + gamesArray[i].gameName;
+      replyString += message.content.endsWith('!') ? ' in ' gamesArray[i].channelName : '';
+    }
+    message.reply(replyString);
+  }
+  
   // Message must mention the bot, be from the server owner, and mention exactly 1 channel
   if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 1) {
     // The game abbreviations included in the message
@@ -101,7 +115,7 @@ client.on('message', async message => {
           // If not watching for the game in the channel
           if (foundServer === undefined) {
             message.reply('I am not currently watching for ' + gameObject.data[0].names.international + ' in ' + channelObj.name);
-            return;
+            continue;
           }
           // Remove server from list
           servers.splice(servers.indexOf(foundServer), 1);
@@ -112,7 +126,7 @@ client.on('message', async message => {
           // If trying to add duplicate
           if (foundServer !== undefined) {
             message.reply('I am already watching for ' + gameObject.data[0].names.international + ' in ' + channelObj.name);
-            return;
+            continue;
           }
           // Server information
           const newServer = {

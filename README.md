@@ -16,6 +16,8 @@ In order to identify a game, send the game abbreviation from speedrun.com. For i
 
 You must only mention one channel in your message. However, you can include more than one game. If you want to remove a game, add a `!` before the game abbreviation, like `!alttp`.
 
+If you want to know what games are being watched by RUN GET, just type `?rungetgames`. If you want the list to include the channels, add a `!` to the end: `?rungetgames!`.
+
 **Important Note:** Only server owners can set up RUN GET. Additionally, make sure the bot has permission to send embeds.
 
 ## Problems?
@@ -25,3 +27,9 @@ Submit an issue on [GitHub](https://github.com/slashinfty/run-get/issues/new). I
 ## Related Bot
 
 Want to be able to look up speedrunning world records and personal bests in your Discord server? Maybe get a list of categories or category rules? Check out [srcom-bot](https://slashinfty.github.io/srcom-bot).
+
+## Changelog
+
+13 July 2020 - Added `?rungetgames` command. Adding multiple games doesn't short circuit if there's a duplicate.
+
+12 July 2020 - Initial release.
