@@ -80,10 +80,10 @@ client.on('message', async message => {
       return;
     }
     let replyString = 'Currently watching:\n';
-    for (let i = 0; i < gamesArray; i++) {
-      replyString += i === 0 ? gamesArray[i].gameName : '\n' + gamesArray[i].gameName;
-      replyString += message.content.endsWith('!') ? ' in ' + gamesArray[i].channelName : '';
-    }
+    gamesArray.forEach((g, i) => {
+      replyString += i === 0 ? g.gameName : '\n' + g.gameName;
+      replyString += message.content.endsWith('!') ? ' in ' + g.channelName : '';
+    });
     message.reply(replyString);
   }
   
