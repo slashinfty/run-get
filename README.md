@@ -30,6 +30,8 @@ Want to be able to look up speedrunning world records and personal bests in your
 
 ## Changelog
 
+17 July 2020 - Runs now have a leaderboard rank in the embed.
+
 13 July 2020 - Added `?rungetgames` command. Adding multiple games doesn't short circuit if there's a duplicate.
 
 12 July 2020 - Initial release.

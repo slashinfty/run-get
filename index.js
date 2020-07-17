@@ -80,10 +80,10 @@ client.on('message', async message => {
       return;
     }
     let replyString = 'Currently watching:\n';
-    for (let i = 0; i < gamesArray; i++) {
-      replyString += i === 0 ? gamesArray[i].gameName : '\n' + gamesArray[i].gameName;
-      replyString += message.content.endsWith('!') ? ' in ' + gamesArray[i].channelName : '';
-    }
+    gamesArray.forEach((g, i) => {
+      replyString += i === 0 ? g.gameName : '\n' + g.gameName;
+      replyString += message.content.endsWith('!') ? ' in ' + g.channelName : '';
+    });
     message.reply(replyString);
   }
   
@@ -182,6 +182,19 @@ client.setInterval(async () => {
     // Subcategory information
     const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory']);
     let subCategory = subCategoryObject !== undefined ? ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')' : '';
+    let runRank;
+    if (thisRun.category.data.type === 'per-level') {
+      const levelLeaderboardResponse = await fetch(`https://www.speedrun.com/api/v1/leaderboards/${thisRun.game.data.id}/level/${thisRun.level}/${thisRun.category.data.id}`);
+      const levelLeaderboardObject = await levelLeaderboardResponse.json();
+      let foundRun = levelLeaderboardObject.data.runs.find(r => r.run.id === thisRun.id);
+      runRank = foundRun === undefined ? '' : foundRun.place;
+    } else {
+      const subCategoryVar = subCategoryObject !== undefined ? '?var-' + subCategoryObject.id + '=' + thisRun.values[subCategoryObject.id] : '';
+      const gameLeaderboardResponse = await fetch(`https://www.speedrun.com/api/v1/leaderboards/${thisRun.game.data.id}/category/${thisRun.category.data.id}` + subCategoryVar);
+      const gameLeaderboardObject = await gameLeaderboardResponse.json();
+      let foundRun = gameLeaderboardObject.data.runs.find(r => r.run.id === thisRun.id);
+      runRank = foundRun === undefined ? '' : foundRun.place;
+    }
     // Create Discord embed
     const embed = new Discord.MessageEmbed()
       .setColor('#2A89E7')
@@ -189,6 +202,7 @@ client.setInterval(async () => {
       .setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
       .setURL(thisRun.weblink)
       .setAuthor(thisRun.game.data.names.international + ' - ' + thisRun.category.data.name + subCategory)
+      .addField('Leaderboard Rank:', runRank)
       .addField('Date Played:', thisRun.date)
       .setTimestamp();
     // Get all channels watching this game
