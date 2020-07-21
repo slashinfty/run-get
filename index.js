@@ -180,20 +180,20 @@ client.setInterval(async () => {
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
     // Subcategory information
-    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory']);
-    let subCategory = subCategoryObject !== undefined ? ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')' : '';
+    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true);
+    let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')';
     let runRank;
     if (thisRun.category.data.type === 'per-level') {
       const levelLeaderboardResponse = await fetch(`https://www.speedrun.com/api/v1/leaderboards/${thisRun.game.data.id}/level/${thisRun.level}/${thisRun.category.data.id}`);
       const levelLeaderboardObject = await levelLeaderboardResponse.json();
       let foundRun = levelLeaderboardObject.data.runs.find(r => r.run.id === thisRun.id);
-      runRank = foundRun === undefined ? '' : foundRun.place;
+      runRank = foundRun === undefined ? 'N/A' : foundRun.place;
     } else {
       const subCategoryVar = subCategoryObject !== undefined ? '?var-' + subCategoryObject.id + '=' + thisRun.values[subCategoryObject.id] : '';
       const gameLeaderboardResponse = await fetch(`https://www.speedrun.com/api/v1/leaderboards/${thisRun.game.data.id}/category/${thisRun.category.data.id}` + subCategoryVar);
       const gameLeaderboardObject = await gameLeaderboardResponse.json();
       let foundRun = gameLeaderboardObject.data.runs.find(r => r.run.id === thisRun.id);
-      runRank = foundRun === undefined ? '' : foundRun.place;
+      runRank = foundRun === undefined ? 'N/A' : foundRun.place;
     }
     // Create Discord embed
     const embed = new Discord.MessageEmbed()
