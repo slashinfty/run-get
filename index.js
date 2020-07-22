@@ -9,10 +9,13 @@ const client = new Discord.Client();
 client.login(config.token);
 
 // Time of first run at last query
-let compareTime;
+let verifiedCompareTime;
+let submittedCompareTime;
 // Server and game information
 let servers;
-let games;
+let verifiedGames;
+let users;
+let submittedGames;
 
 // Convert times to a readable format
 const convert = time => {
@@ -32,7 +35,7 @@ const convert = time => {
 const serverUpdate = () => {
   // Update games list
   const rawGames = servers.map(s => s.game);
-  games = [...new Set(rawGames)];
+  verifiedGames = [...new Set(rawGames)];
   // Get file contents
   const file = path.join(__dirname, 'servers.json');
   const contents = fs.readFileSync(file);
@@ -40,6 +43,20 @@ const serverUpdate = () => {
   // Update with current list of servers and write
   serverObject.servers = servers;
   fs.writeFileSync(file, JSON.stringify(serverObject));
+}
+
+// Save any user changes to file
+const userUpdate = () => {
+  // Update games list
+  const rawGames = users.map(u => u.game);
+  submittedGames = [...new Set(rawGames)];
+  // Get file contents
+  const file = path.join(__dirname, 'users.json');
+  const contents = fs.readFileSync(file);
+  let userObject = JSON.parse(contents);
+  // Update with current list of users and write
+  userObject.users = users;
+  fs.writeFileSync(file, JSON.stringify(userObject));
 }
 
 // Bot is on
@@ -54,18 +71,31 @@ client.once('ready', () => {
     status: 'dnd'
   });
   // Fill servers and games
-  const file = path.join(__dirname, 'servers.json');
+  const serverFile = path.join(__dirname, 'servers.json');
   // Create file if it doesn't exist
-  if (!fs.existsSync(file)) {
-    const newObj = {
+  if (!fs.existsSync(serverFile)) {
+    const newServerObj = {
       "servers": []
     };
-    fs.writeFileSync(file, JSON.stringify(newObj));
+    fs.writeFileSync(serverFile, JSON.stringify(newServerObj));
   }
-  const contents = fs.readFileSync(file);
-  servers = JSON.parse(contents).servers;
-  const rawGames = servers.map(s => s.game);
-  games = [...new Set(rawGames)];
+  const serverContents = fs.readFileSync(serverFile);
+  servers = JSON.parse(serverContents).servers;
+  const rawServerGames = servers.map(s => s.game);
+  verifiedGames = [...new Set(rawServerGames)];
+  // Fill users and games
+  const userFile = path.join(__dirname, 'users.json');
+  // Create file if it doesn't exist
+  if (!fs.existsSync(userFile)) {
+    const newUserObj = {
+      "users": []
+    };
+    fs.writeFileSync(userFile, JSON.stringify(newUserObj));
+  }
+  const userContents = fs.readFileSync(userFile);
+  users = JSON.parse(userContents).users;
+  const rawUserGames = users.map(u => u.game);
+  submittedGames = [...new Set(rawUserGames)];
 });
 
 // Messages to add game watch to a server
@@ -85,6 +115,66 @@ client.on('message', async message => {
       replyString += message.content.endsWith('!') ? ' in ' + g.channelName : '';
     });
     message.reply(replyString);
+  }
+  
+  // Message must mention the bot and the user
+  if (message.mentions.users.has(client.user.id) && message.mentions.users.has(message.member.id)) {
+    const submittedNameArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b/g);
+    if (submittedNameArray.length === 0) {
+      message.reply('No user name specified in message.');
+      return;
+    }
+    const submittedName = submittedNameArray[0];
+    if (submittedName.startsWith('!')) {
+      const checkName = submittedName.slice(1);
+      const foundUser = users.find(u => u.userName === checkName);
+      if (foundUser === undefined) {
+        message.reply('I am not currently watching games for ' + checkName);
+      } else {
+        const allGames = users.filter(u => u.userName === checkName);
+        allGames.forEach(g => users.splice(users.indexOf(g), 1));
+        message.reply('No longer watching games for ' + checkName);
+        userUpdate();
+      }
+    } else {
+      let userName, userId;
+      const twitchResponse = await fetch(`https://www.speedrun.com/api/v1/users?twitch=${submittedName}`);
+      const twitchObject = await twitchResponse.json();
+      if (twitchObject.data.length > 0) {
+        userName = twitchObject.data[0].names.international;
+        userId = twitchObject.data[0].id
+      } else {
+        const userResponse = await fetch(`https://www.speedrun.com/api/v1/users?name=${submittedName}&max=10`);
+        const userObject = await runnerResponse.json();
+        if (userObject.data.length === 0) {
+          message.reply('No user found with name ' + submittedName);
+          return;
+        } else if (userObject.data.length > 1) {
+          message.reply('Too many users found. Try connecting your Twitch account to speedrun.com and use that.');
+          return;
+        }
+        userName = userObject.data[0].names.international;
+        userId = userObject.data[0].id;
+      }
+      const checkUser = users.find(u => u.user === userId);
+      if (checkUser !== undefined) {
+        message.author.send('I am already watching for submissions for you!');
+        return;
+      }
+      const moderateResponse = await fetch (`https://www.speedrun.com/api/v1/games?moderator=${userId}&max=200`);
+      const moderateObject = await moderateResponse.json();
+      for (let i = 0; i < moderateObject.data.length; i++) {
+        const newUser = {
+          "user": userId,
+          "userName": userName,
+          "game": moderateObject.data[i].id,
+          "gameName": moderateObject.data[i].names.international
+        }
+        users.push(newUser);
+        message.author.send('Now watching ' + moderateObject.data[i].names.international);
+        userUpdate();
+      }
+    }
   }
   
   // Message must mention the bot, be from the server owner, and mention exactly 1 channel
@@ -154,6 +244,32 @@ client.on('guildDelete', guild => {
   serverUpdate();
 });
 
+// Update users for any new games being moderated
+client.setInterval(async () => {
+  // Get all unique users
+  const rawUsers = users.map(u => u.user);
+  const uniqueUsers = [...new Set(rawUsers)];
+  // Check their moderated games
+  for (let i = 0; i < uniqueUsers.length; i++) {
+    const moderateResponse = await fetch (`https://www.speedrun.com/api/v1/games?moderator=${uniqueUsers[i]}&max=200`);
+    const moderateObject = moderateResponse.json();
+    const existingGames = users.filter(u => u.user === uniqueUsers[i]).map(g => g.game);
+    const userName = users.find(u => u.user === uniqueUsers[i]).userName;
+    for (let j = 0; j < moderateObject.data.length; j++) {
+      if (!existingGames.includes(moderateObject.data[j].id)) {
+        const newUser = {
+          "user": uniqueUsers[i],
+          "userName": userName,
+          "game": moderateObject.data[i].id,
+          "gameName": moderateObject.data[i].names.international
+        }
+        users.push(newUser);
+      }
+    }
+  }
+  userUpdate();
+}, 864e5); //24 hours
+
 // The core function - 6e4 for timeout
 client.setInterval(async () => {
   // Get 20 most recent verified runs
@@ -167,16 +283,16 @@ client.setInterval(async () => {
     const verifyTime = await new Date(thisRun.status['verify-date']);
     // Update time to check if it's the first run
     if (i === 0) {
-      if (compareTime === undefined) compareTime = verifyTime;
+      if (verifiedCompareTime === undefined) verifiedCompareTime = verifyTime;
       newCompareTime = verifyTime;
     }
     // If the run was before last first checked run, quit (but update time!)
-    if (verifyTime - compareTime <= 0) {
-      compareTime = newCompareTime;
+    if (verifyTime - verifiedCompareTime <= 0) {
+      verifiedCompareTime = newCompareTime;
       return;
     }
     // If this game isn't being watched, skip
-    if (!games.includes(thisRun.game.data.id)) continue;
+    if (!verifiedGames.includes(thisRun.game.data.id)) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
     // Subcategory information
@@ -210,9 +326,56 @@ client.setInterval(async () => {
     // Send message
     for (let j = 0; j < channels.length; j++) {
       const thisChannel = await client.channels.fetch(channels[j]);
-      await thisChannel.send(embed).then(msg => compareTime = newCompareTime);
+      await thisChannel.send(embed).then(msg => verifiedCompareTime = newCompareTime);
     }
   }
   // Update time to check
-  compareTime = newCompareTime;
+  verifiedCompareTime = newCompareTime;
+}, 6e4); // 60 seconds
+
+client.setInterval(async() => {
+  // Get 20 most recent submitted runs
+  const recentRunsResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=new&orderby=verify-date&direction=desc&embed=game,category.variables,players`);
+  const recentRunsObject = await recentRunsResponse.json();
+  const recentRuns = recentRunsObject.data;
+  let newCompareTime;
+  for (let i = 0; i < recentRuns.length; i++) {
+    const thisRun = recentRuns[i];
+    // When run was submitted
+    const submitTime = await new Date(thisRun.submitted);
+    // Update time to check if it's the first run
+    if (i === 0) {
+      if (submittedCompareTime === undefined) submittedCompareTime = submitTime;
+      newCompareTime = submitTime;
+    }
+    // If the run was before last first checked run, quit (but update time!)
+    if (submitTime - submittedCompareTime <= 0) {
+      submittedCompareTime = newCompareTime;
+      return;
+    }
+    if (!submittedGames.includes(thisRun.game.data.id)) continue;
+    // Name of the runner
+    const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
+    // Subcategory information
+    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true);
+    let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')';
+    // Create Discord embed
+    const embed = new Discord.MessageEmbed()
+      .setColor('#2A89E7')
+      .setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
+      .setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
+      .setURL(thisRun.weblink)
+      .setAuthor(thisRun.game.data.names.international + ' - ' + thisRun.category.data.name + subCategory)
+      .addField('Date Played:', thisRun.date)
+      .setTimestamp();
+    // Get all users watching this game
+    let usersWatching = users.filter(u => u.game === thisRun.game.data.id).map(u => u.user);
+    // Send message
+    for (let j = 0; j < usersWatching.length; j++) {
+      const thisUser = await client.users.fetch(usersWatching[j]);
+      await thisUser.send(embed).then(msg => submittedCompareTime = newCompareTime);
+    }
+  }
+  // Update time to check
+  submittedCompareTime = newCompareTime;
 }, 6e4); // 60 seconds
