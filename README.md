@@ -34,7 +34,7 @@ The `?rungetgames` command works via DM, and will return all games that are bein
 
 ## Running the Bot Yourself
 
-You will need Node.js (nvm is recommended) and yarn. Clone the repository, run `yarn install`, then `node index.js` to start the bot.
+You will need Node.js (nvm is recommended) and yarn. Clone the repository, run `yarn install`, add your Discord API token to `config.js`, then `node index.js` to start the bot.
 
 ## Problems?
 
