@@ -168,7 +168,8 @@ client.on('message', async message => {
           "user": userId,
           "userName": userName,
           "game": moderateObject.data[i].id,
-          "gameName": moderateObject.data[i].names.international
+          "gameName": moderateObject.data[i].names.international,
+          "channel": message.author.id
         }
         users.push(newUser);
         message.author.send('Now watching ' + moderateObject.data[i].names.international);
@@ -244,53 +245,24 @@ client.on('guildDelete', guild => {
   serverUpdate();
 });
 
-// Update users for any new games being moderated
-client.setInterval(async () => {
-  // Get all unique users
-  const rawUsers = users.map(u => u.user);
-  const uniqueUsers = [...new Set(rawUsers)];
-  // Check their moderated games
-  for (let i = 0; i < uniqueUsers.length; i++) {
-    const moderateResponse = await fetch (`https://www.speedrun.com/api/v1/games?moderator=${uniqueUsers[i]}&max=200`);
-    const moderateObject = moderateResponse.json();
-    const existingGames = users.filter(u => u.user === uniqueUsers[i]).map(g => g.game);
-    const userName = users.find(u => u.user === uniqueUsers[i]).userName;
-    for (let j = 0; j < moderateObject.data.length; j++) {
-      if (!existingGames.includes(moderateObject.data[j].id)) {
-        const newUser = {
-          "user": uniqueUsers[i],
-          "userName": userName,
-          "game": moderateObject.data[i].id,
-          "gameName": moderateObject.data[i].names.international
-        }
-        users.push(newUser);
-      }
-    }
-  }
-  userUpdate();
-}, 864e5); //24 hours
-
 // The core function - 6e4 for timeout
 client.setInterval(async () => {
   // Get 20 most recent verified runs
-  const recentRunsResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=verified&orderby=verify-date&direction=desc&embed=game,category.variables,players`);
-  const recentRunsObject = await recentRunsResponse.json();
-  const recentRuns = recentRunsObject.data;
-  let newCompareTime;
-  for (let i = 0; i < recentRuns.length; i++) {
-    const thisRun = recentRuns[i];
+  const recentVerifiedResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=verified&orderby=verify-date&direction=desc&embed=game,category.variables,players`);
+  const recentVerifiedObject = await recentVerifiedResponse.json();
+  const recentVerified = recentVerifiedObject.data;
+  let newVerifyTime;
+  for (let i = 0; i < recentVerified.length; i++) {
+    const thisRun = recentVerified[i];
     // When run was verified
     const verifyTime = await new Date(thisRun.status['verify-date']);
     // Update time to check if it's the first run
     if (i === 0) {
       if (verifiedCompareTime === undefined) verifiedCompareTime = verifyTime;
-      newCompareTime = verifyTime;
+      newVerifyTime = verifyTime;
     }
     // If the run was before last first checked run, quit (but update time!)
-    if (verifyTime - verifiedCompareTime <= 0) {
-      verifiedCompareTime = newCompareTime;
-      return;
-    }
+    if (verifyTime - verifiedCompareTime <= 0) break;
     // If this game isn't being watched, skip
     if (!verifiedGames.includes(thisRun.game.data.id)) continue;
     // Name of the runner
@@ -326,33 +298,27 @@ client.setInterval(async () => {
     // Send message
     for (let j = 0; j < channels.length; j++) {
       const thisChannel = await client.channels.fetch(channels[j]);
-      await thisChannel.send(embed).then(msg => verifiedCompareTime = newCompareTime);
+      await thisChannel.send(embed).then(msg => verifiedCompareTime = newVerifyTime);
     }
   }
   // Update time to check
-  verifiedCompareTime = newCompareTime;
-}, 6e4); // 60 seconds
-
-client.setInterval(async() => {
+  verifiedCompareTime = newVerifyTime;
   // Get 20 most recent submitted runs
-  const recentRunsResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=new&orderby=verify-date&direction=desc&embed=game,category.variables,players`);
-  const recentRunsObject = await recentRunsResponse.json();
-  const recentRuns = recentRunsObject.data;
-  let newCompareTime;
-  for (let i = 0; i < recentRuns.length; i++) {
-    const thisRun = recentRuns[i];
+  const recentSubmitResponse = await fetch(`https://www.speedrun.com/api/v1/runs?status=new&orderby=submitted&direction=desc&embed=game,category.variables,players`);
+  const recentSubmitObject = await recentSubmitResponse.json();
+  const recentSubmit = recentSubmitObject.data;
+  let newSubmitTime;
+  for (let i = 0; i < recentSubmit.length; i++) {
+    const thisRun = recentSubmit[i];
     // When run was submitted
     const submitTime = await new Date(thisRun.submitted);
     // Update time to check if it's the first run
     if (i === 0) {
       if (submittedCompareTime === undefined) submittedCompareTime = submitTime;
-      newCompareTime = submitTime;
+      newSubmitTime = submitTime;
     }
     // If the run was before last first checked run, quit (but update time!)
-    if (submitTime - submittedCompareTime <= 0) {
-      submittedCompareTime = newCompareTime;
-      return;
-    }
+    if (submitTime - submittedCompareTime <= 0) break;
     if (!submittedGames.includes(thisRun.game.data.id)) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
@@ -369,13 +335,39 @@ client.setInterval(async() => {
       .addField('Date Played:', thisRun.date)
       .setTimestamp();
     // Get all users watching this game
-    let usersWatching = users.filter(u => u.game === thisRun.game.data.id).map(u => u.user);
+    let usersWatching = users.filter(u => u.game === thisRun.game.data.id).map(u => u.channel);
     // Send message
     for (let j = 0; j < usersWatching.length; j++) {
       const thisUser = await client.users.fetch(usersWatching[j]);
-      await thisUser.send(embed).then(msg => submittedCompareTime = newCompareTime);
+      await thisUser.send(embed).then(msg => submittedCompareTime = newSubmitTime);
     }
   }
   // Update time to check
-  submittedCompareTime = newCompareTime;
+  submittedCompareTime = newSubmitTime;
 }, 6e4); // 60 seconds
+
+// Update users for any new games being moderated
+client.setInterval(async () => {
+  // Get all unique users
+  const rawUsers = users.map(u => u.user);
+  const uniqueUsers = [...new Set(rawUsers)];
+  // Check their moderated games
+  for (let i = 0; i < uniqueUsers.length; i++) {
+    const moderateResponse = await fetch (`https://www.speedrun.com/api/v1/games?moderator=${uniqueUsers[i]}&max=200`);
+    const moderateObject = moderateResponse.json();
+    const existingGames = users.filter(u => u.user === uniqueUsers[i]).map(g => g.game);
+    const userName = users.find(u => u.user === uniqueUsers[i]).userName;
+    for (let j = 0; j < moderateObject.data.length; j++) {
+      if (!existingGames.includes(moderateObject.data[j].id)) {
+        const newUser = {
+          "user": uniqueUsers[i],
+          "userName": userName,
+          "game": moderateObject.data[i].id,
+          "gameName": moderateObject.data[i].names.international
+        }
+        users.push(newUser);
+      }
+    }
+  }
+  userUpdate();
+}, 864e5); //24 hours
