@@ -24,11 +24,17 @@ If you want to know what games are being watched by RUN GET, just type `?rungetg
 
 ## Setting up Submitted Runs
 
-You must identify yourself to RUN GET for it to find your speedrun.com user name. To do this, mention RUN BOT, yourself, and include your name on speedrun.com (example: `@RUN GET @dadinfinitum dadinfinitum`). Send this message in any channel in a server that RUN GET is in (as long as RUN GET can read the messages).
+There are two ways to have RUN GET send you new submissions for any particular game.
 
-It will try to find a unique user, and will search by Twitch user names first (this is the most accurate way to search, but it requires you to connect your Twitch account to speedrun.com).
+You can DM the bot with game abbreviations, just as you would to get verified runs. This includes using `!` to remove a game.
 
-To remove this watch, type the same command, but with an `!` in front of your speedrun.com user name.
+You can DM the bot your speedrun.com user name (or Twitch user name, if you've linked it to speedrun.com) with `*` in front, such as `*dadinfinitum`. The bot will search for your name on speedrun.com, then add all games that you are a moderator for.
+
+The `?rungetgames` command works via DM, and will return all games that are being watched by RUN GET.
+
+## Running the Bot Yourself
+
+You will need Node.js (nvm is recommended) and yarn. Clone the repository, run `yarn install`, then `node index.js` to start the bot.
 
 ## Problems?
 
@@ -40,7 +46,7 @@ Want to be able to look up speedrunning world records and personal bests in your
 
 ## Changelog
 
-21 July 2020 - Bot can now DM newly submitted runs for any game you moderate.
+25 July 2020 - Bot can now DM newly submitted runs.
 
 17 July 2020 - Runs now have a leaderboard rank in the embed.
 

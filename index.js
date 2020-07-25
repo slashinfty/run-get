@@ -104,39 +104,38 @@ client.on('message', async message => {
   if (message.content === '?rungethelp') message.reply('Need help with RUN GET? https://slashinfty.github.io/run-get');
   
   if (message.content === '?rungetgames' || message.content === '?rungetgames!') {
-    const gamesArray = servers.filter(s => s.server === message.guild.id);
-    if (gamesArray.length === 0) {
-      message.reply('Not currently watching any games.');
+    if (message.channel.type === 'dm') {
+      const gamesArray = users.filter(u => u.channel === message.author.id);
+      if (gamesArray.length === 0) {
+        message.reply('Not currently watching any games.');
+        return;
+      }
+      let replyString = 'Currently watching:\n';
+      gamesArray.forEach((g, i) => {
+        replyString += i === 0 ? g.gameName : '\n' + g.gameName;
+      });
+      message.reply(replyString);
       return;
+    } else {
+      const gamesArray = servers.filter(s => s.server === message.guild.id);
+      if (gamesArray.length === 0) {
+        message.reply('Not currently watching any games.');
+        return;
+      }
+      let replyString = 'Currently watching:\n';
+      gamesArray.forEach((g, i) => {
+        replyString += i === 0 ? g.gameName : '\n' + g.gameName;
+        replyString += message.content.endsWith('!') ? ' in ' + g.channelName : '';
+      });
+      message.reply(replyString);
     }
-    let replyString = 'Currently watching:\n';
-    gamesArray.forEach((g, i) => {
-      replyString += i === 0 ? g.gameName : '\n' + g.gameName;
-      replyString += message.content.endsWith('!') ? ' in ' + g.channelName : '';
-    });
-    message.reply(replyString);
   }
   
   // Message must mention the bot and the user
-  if (message.mentions.users.has(client.user.id) && message.mentions.users.has(message.member.id)) {
-    const submittedNameArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b/g);
-    if (submittedNameArray.length === 0) {
-      message.reply('No user name specified in message.');
-      return;
-    }
-    const submittedName = submittedNameArray[0];
-    if (submittedName.startsWith('!')) {
-      const checkName = submittedName.slice(1);
-      const foundUser = users.find(u => u.userName === checkName);
-      if (foundUser === undefined) {
-        message.reply('I am not currently watching games for ' + checkName);
-      } else {
-        const allGames = users.filter(u => u.userName === checkName);
-        allGames.forEach(g => users.splice(users.indexOf(g), 1));
-        message.reply('No longer watching games for ' + checkName);
-        userUpdate();
-      }
-    } else {
+  if (message.channel.type === 'dm' && message.author.id != client.user.id) {
+    const submittedGamesArray = message.content.match(/[\!\*]?\b(?<!\<)\w+(?!\>)\b/g);
+    if (submittedGamesArray.length === 1 && submittedGamesArray[0].startsWith('*')) {
+      const submittedName = submittedGamesArray[0].slice(1);
       let userName, userId;
       const twitchResponse = await fetch(`https://www.speedrun.com/api/v1/users?twitch=${submittedName}`);
       const twitchObject = await twitchResponse.json();
@@ -156,14 +155,14 @@ client.on('message', async message => {
         userName = userObject.data[0].names.international;
         userId = userObject.data[0].id;
       }
-      const checkUser = users.find(u => u.user === userId);
-      if (checkUser !== undefined) {
-        message.author.send('I am already watching for submissions for you!');
-        return;
-      }
       const moderateResponse = await fetch (`https://www.speedrun.com/api/v1/games?moderator=${userId}&max=200`);
       const moderateObject = await moderateResponse.json();
       for (let i = 0; i < moderateObject.data.length; i++) {
+        const existing = users.find(u => u.channel === message.author.id && u.game === gameID);
+        if (existing !== undefined) {
+          message.reply('I am already watching for ' + moderateObject.data[i].names.international + ' for you');
+          continue;
+        }
         const newUser = {
           "user": userId,
           "userName": userName,
@@ -175,7 +174,53 @@ client.on('message', async message => {
         message.author.send('Now watching ' + moderateObject.data[i].names.international);
         userUpdate();
       }
+      return;
     }
+    if (submittedGamesArray.length === 0) {
+      message.reply('No games specified in message.');
+      return;
+    }
+    for (let i = 0; i < submittedGamesArray.length; i++) {
+      // Get game ID from abbreviation
+      const abbr = submittedGamesArray[i].startsWith('!') ? submittedGamesArray[i].slice(1) : submittedGamesArray[i];
+      const abbreviation = qs.stringify({ abbreviation: abbr });
+      const gameQuery = await fetch(`https://www.speedrun.com/api/v1/games?${abbreviation}`);
+      const gameObject = await gameQuery.json();
+      // If no game is found
+      if (gameObject.data.length === 0) {
+        message.reply('No game found. Are you sure https://www.speedrun.com/' + submittedGamesArray[i] + ' exists?');
+        return;
+      }
+      const gameID = gameObject.data[0].id;
+      // Grabbing user information if already watching for the game
+      const foundUser = users.find(u => u.channel === message.author.id && u.game === gameID);
+      // Check if removing
+      if (submittedGamesArray[i].startsWith('!')) {
+        if (foundUser === undefined) {
+          message.reply('I am not currently watching games for ' + checkName);
+          continue;
+        }
+        users.splice(users.indexOf(foundUser), 1);
+        message.reply('No longer watching ' + gameObject.data[0].names.international);
+        userUpdate();
+      } else {
+        if (foundUser !== undefined) {
+          message.reply('I am already watching for ' + gameObject.data[0].names.international + ' for you');
+          continue;
+        }
+        // User information
+        const newUser = {
+          "user": message.author.username,
+          "channel": message.channel.id,
+          "game": gameID,
+          "gameName": gameObject.data[0].names.international
+        }
+        users.push(newUser);
+        message.author.send('Now watching ' + gameObject.data[0].names.international);
+        userUpdate();
+      }
+    }
+    return;
   }
   
   // Message must mention the bot, be from the server owner, and mention exactly 1 channel
@@ -345,29 +390,3 @@ client.setInterval(async () => {
   // Update time to check
   submittedCompareTime = newSubmitTime;
 }, 6e4); // 60 seconds
-
-// Update users for any new games being moderated
-client.setInterval(async () => {
-  // Get all unique users
-  const rawUsers = users.map(u => u.user);
-  const uniqueUsers = [...new Set(rawUsers)];
-  // Check their moderated games
-  for (let i = 0; i < uniqueUsers.length; i++) {
-    const moderateResponse = await fetch (`https://www.speedrun.com/api/v1/games?moderator=${uniqueUsers[i]}&max=200`);
-    const moderateObject = moderateResponse.json();
-    const existingGames = users.filter(u => u.user === uniqueUsers[i]).map(g => g.game);
-    const userName = users.find(u => u.user === uniqueUsers[i]).userName;
-    for (let j = 0; j < moderateObject.data.length; j++) {
-      if (!existingGames.includes(moderateObject.data[j].id)) {
-        const newUser = {
-          "user": uniqueUsers[i],
-          "userName": userName,
-          "game": moderateObject.data[i].id,
-          "gameName": moderateObject.data[i].names.international
-        }
-        users.push(newUser);
-      }
-    }
-  }
-  userUpdate();
-}, 864e5); //24 hours
