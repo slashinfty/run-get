@@ -2,21 +2,23 @@
 
 ## What It Does
 
-It sends information on recently verified speedruns for any game (on speedrun.com) that you pick.
+It sends information on recently verified speedruns for any game or runner (on speedrun.com) that you pick.
 
 ![Screenshot of embed](static/screenshot2.png)
 
-Additionally, it can DM you recent submissions for all games you moderate.
+Additionally, it can DM you recent submissions for any game.
 
 ## Setting Up Verified Runs
 
-Once RUN GET is in your server, you need to assign it a channel to send messages to, and tell it one or more games to watch. Simply send a message mentioning RUN GET, mention the channel you want RUN GET to post in, and any number of games you want it to watch.
+Once RUN GET is in your server, you need to assign it a channel to send messages to, and tell it one or more games or runners to watch. Simply send a message mentioning RUN GET, mention the channel you want RUN GET to post in, and any number of games or runners you want it to watch.
 
 ![Screenshot of setup](static/screenshot1.png)
 
 In order to identify a game, send the game abbreviation from speedrun.com. For instance, if you want RUN GET to watch for new The Legend of Zelda: A Link to the Past runs, and you know the leaderboard is `https://www.speedrun.com/alttp`, then you'd use `alttp`.
 
-You must only mention one channel in your message. However, you can include more than one game. If you want to remove a game, add a `!` before the game abbreviation, like `!alttp`.
+In order to identify a runner, send the speedrun.com user name (or Twitch user name, if you've linked it to speedrun.com) with an `*` at the end, such as `dadinfinitum*`.
+
+You must only mention one channel in your message. However, you can include more than one game or runner. If you want to remove a game, add a `!` before the game abbreviation, like `!alttp`.
 
 If you want to know what games are being watched by RUN GET, just type `?rungetgames`. If you want the list to include the channels, add a `!` to the end: `?rungetgames!`.
 
@@ -28,7 +30,7 @@ There are two ways to have RUN GET send you new submissions for any particular g
 
 You can DM the bot with game abbreviations, just as you would to get verified runs. This includes using `!` to remove a game.
 
-You can DM the bot your speedrun.com user name (or Twitch user name, if you've linked it to speedrun.com) with `*` in front, such as `*dadinfinitum`. The bot will search for your name on speedrun.com, then add all games that you are a moderator for.
+You can DM the bot your speedrun.com user name (or Twitch user name, if you've linked it to speedrun.com) with an `*` at the end, such as `dadinfinitum*`. The bot will search for your name on speedrun.com, then add all games that you are a moderator for.
 
 The `?rungetgames` command works via DM, and will return all games that are being watched by RUN GET.
 

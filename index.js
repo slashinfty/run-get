@@ -118,7 +118,7 @@ client.once('ready', () => {
     const newRunnerObj = {
       "runners": []
     };
-    fs.writeFileSync(runnerFile, JSON.stringify(newRUnnerObj));
+    fs.writeFileSync(runnerFile, JSON.stringify(newRunnerObj));
   }
   const runnerContents = fs.readFileSync(runnerFile);
   runners = JSON.parse(runnerContents).runners;
@@ -163,13 +163,13 @@ client.on('message', async message => {
   
   // Message must mention the bot and the user
   if (message.channel.type === 'dm' && message.author.id != client.user.id) {
-    const submittedGamesArray = message.content.match(/[\!\*]?\b(?<!\<)\w+(?!\>)\b/g);
+    const submittedGamesArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b\*?/g);
     if (submittedGamesArray === null) {
       message.author.send('No game/user submitted.');
       return;
     }
-    if (submittedGamesArray.length === 1 && submittedGamesArray[0].startsWith('*')) {
-      const submittedName = submittedGamesArray[0].slice(1);
+    if (submittedGamesArray.length === 1 && submittedGamesArray[0].endsWith('*')) {
+      const submittedName = submittedGamesArray[0].slice(0, -1);
       let userName, userID;
       const twitchResult = await query.twitchUser(submittedName);
       if (twitchResult !== undefined) {
@@ -251,7 +251,7 @@ client.on('message', async message => {
   // Message must mention the bot, be from the server owner, and mention exactly 1 channel
   if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 1) {
     // The game abbreviations included in the message
-    const gameAbbreviationArray = message.content.match(/[\!\*]?\b(?<!\<)\w+(?!\>)\b/g);
+    const gameAbbreviationArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b\*?/g);
     if (gameAbbreviationArray === null) {
       message.reply('Missing parameters.');
       return;
@@ -300,7 +300,7 @@ client.on('message', async message => {
           // Runner information
           const newRunner = {
             "server": message.guild.id,
-            "serverName": message.guilde.name,
+            "serverName": message.guild.name,
             "channel": channelObj.id,
             "channelName": channelObj.name,
             "runner": userId,
@@ -308,16 +308,16 @@ client.on('message', async message => {
           }
           // Add to runners and update the list
           runners.push(newRunner);
-          message.reply('No watching for ' + userName + ' in ' + channelObj.name);
+          message.reply('Now watching for ' + userName + ' in ' + channelObj.name);
           runnerUpdate();
         }
       } else {
         // Get game ID from abbreviation
-        const abbr = submittedGamesArray[i].startsWith('!') ? submittedGamesArray[i].slice(1) : submittedGamesArray[i];
+        const abbr = gameAbbreviationArray[i].startsWith('!') ? gameAbbreviationArray[i].slice(1) : gameAbbreviationArray[i];
         const gameResult = await query.game(abbr);
         // If no game is found
         if (gameResult === undefined) {
-          message.reply('No game found. Are you sure https://www.speedrun.com/' + submittedGamesArray[i] + ' exists?');
+          message.reply('No game found. Are you sure https://www.speedrun.com/' + gameAbbreviationArray[i] + ' exists?');
           continue;
         }
         const gameID = gameResult.id;
@@ -372,6 +372,7 @@ client.on('guildDelete', guild => {
   if (runnerArray.length > 0) {
     runnerArray.forEach(r => runners.splice(runners.indexOf(r), 1));
     runnerUpdate();
+  }
 });
 
 // Core function
