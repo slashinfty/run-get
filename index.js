@@ -148,14 +148,17 @@ client.on('message', async message => {
     } else {
       const gamesArray = servers.filter(s => s.server === message.guild.id);
       const runnersArray = runners.filter(r => r.server === message.guild.id);
-      const checkArray = gamesArray.concat(runnersArray);
-      if (checkArray.length === 0) {
+      if (gamesArray.length === 0 && runnersArray.length) {
         message.reply('Not currently watching any games.');
         return;
       }
       let replyString = 'Currently watching:\n';
-      checkArray.forEach((s, i) => {
+      gamesArray.forEach((s, i) => {
         replyString += i === 0 ? s.gameName : '\n' + s.gameName;
+        replyString += message.content.endsWith('!') ? ' in ' + s.channelName : '';
+      });
+      runnersArray.forEach((s, i) => {
+        replyString += i === 0 ? s.runnerName : '\n' + s.runnerName;
         replyString += message.content.endsWith('!') ? ' in ' + s.channelName : '';
       });
       message.reply(replyString);
