@@ -148,7 +148,7 @@ client.on('message', async message => {
     } else {
       const gamesArray = servers.filter(s => s.server === message.guild.id);
       const runnersArray = runners.filter(r => r.server === message.guild.id);
-      if (gamesArray.length === 0 && runnersArray.length) {
+      if (gamesArray.length === 0 && runnersArray.length === 0) {
         message.reply('Not currently watching any games.');
         return;
       }
