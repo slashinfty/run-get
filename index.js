@@ -111,6 +111,7 @@ client.once('ready', () => {
   users = JSON.parse(userContents).users;
   const rawUserGames = users.map(u => u.game);
   submittedGames = [...new Set(rawUserGames)];
+
   // Fill runners and games
   const runnerFile = path.join(__dirname, 'runners.json');
   // Create file if it doesn't exist
@@ -274,7 +275,7 @@ client.on('message', async message => {
             message.reply(srcResult);
             return;
           }
-          userName = srcResult.user;
+          userName = srcResult.name;
           userId = srcResult.id;
         }
         // Grabbing runner information if already watching for the runner
@@ -378,7 +379,7 @@ client.on('guildDelete', guild => {
 // Core function
 client.setInterval(async () => {
   // Get 20 most recent verified runs
-  const recentVerified = query.verifiedRuns();
+  const recentVerified = await query.verifiedRuns();
   let newVerifyTime;
   for (let i = 0; i < recentVerified.length; i++) {
     const thisRun = recentVerified[i];
@@ -432,7 +433,7 @@ client.setInterval(async () => {
   // Update time to check
   verifiedCompareTime = newVerifyTime;
   // Get 20 most recent submitted runs
-  const recentSubmit = query.submittedRuns();
+  const recentSubmit = await query.submittedRuns();
   let newSubmitTime;
   for (let i = 0; i < recentSubmit.length; i++) {
     const thisRun = recentSubmit[i];
