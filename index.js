@@ -221,7 +221,7 @@ client.on('message', async message => {
         continue;
       }
       const gameID = gameResult.id;
-      const gameName = gameResult.name;
+      const gameName = gameResult.names.international;
       // Grabbing user information if already watching for the game
       const foundUser = users.find(u => u.channel === message.author.id && u.game === gameID);
       // Check if removing
@@ -325,7 +325,7 @@ client.on('message', async message => {
           continue;
         }
         const gameID = gameResult.id;
-        const gameName = gameResult.name;
+        const gameName = gameResult.names.international;
         // Grabbing server information if already watching for the game
         const foundServer = servers.find(s => s.server === message.guild.id && s.channel === channelObj.id && s.game === gameID);
         // Check if removing
