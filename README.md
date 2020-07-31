@@ -48,6 +48,8 @@ Want to be able to look up speedrunning world records and personal bests in your
 
 ## Changelog
 
+31 July 2020 - Updated naming of per-level runs.
+
 28 July 2020 - Bot can now watch for verified runs from specific runners.
 
 25 July 2020 - Bot can now DM newly submitted runs.
