@@ -133,15 +133,25 @@ client.on('message', async message => {
   if (message.content === '?rungethelp') message.reply('Need help with RUN GET? https://slashinfty.github.io/run-get');
   
   if (message.content === '?rungetgames' || message.content === '?rungetgames!') {
+    const lengthCheck = (existing, next, msg) => {
+      const content = existing + next;
+      if (content.length >= 2000) {
+        message.reply(existing);
+        return 'Currently watching:';
+      } else {
+        return existing;
+      }
+    }
     if (message.channel.type === 'dm') {
       const gamesArray = users.filter(u => u.channel === message.author.id);
       if (gamesArray.length === 0) {
         message.reply('Not currently watching any games.');
         return;
       }
-      let replyString = 'Currently watching:\n';
-      gamesArray.forEach((g, i) => {
-        replyString += i === 0 ? g.gameName : '\n' + g.gameName;
+      let replyString = 'Currently watching:';
+      gamesArray.forEach(g => {
+        replyString = lengthCheck(replyString, g.gameName, message);
+        replyString += '\n' + g.gameName;
       });
       message.reply(replyString);
       return;
@@ -152,14 +162,16 @@ client.on('message', async message => {
         message.reply('Not currently watching any games.');
         return;
       }
-      let replyString = 'Currently watching:\n';
-      gamesArray.forEach((s, i) => {
-        replyString += i === 0 ? s.gameName : '\n' + s.gameName;
-        replyString += message.content.endsWith('!') ? ' in ' + s.channelName : '';
+      let replyString = 'Currently watching:';
+      gamesArray.forEach(s => {
+        const nextMsg = message.content.endsWith('!') ? '\n' + s.gameName + ' in ' + s.channelName : '\n' + g.gameName;
+        replyString = lengthCheck(replyString, nextMsg, message)
+        replyString += nextMsg;
       });
-      runnersArray.forEach((s, i) => {
-        replyString += i === 0 ? s.runnerName : '\n' + s.runnerName;
-        replyString += message.content.endsWith('!') ? ' in ' + s.channelName : '';
+      runnersArray.forEach(s => {
+        const nextMsg = message.content.endsWith('!') ? '\n' + s.runnerName + ' in ' + s.channelName : '\n' + s.runnerName;
+        replyString = lengthCheck(replyString, nextMsg, message)
+        replyString += nextMsg;
       });
       message.reply(replyString);
     }
@@ -399,13 +411,13 @@ client.setInterval(async () => {
     if (!verifiedGames.includes(thisRun.game.data.id) && !runnerNames.includes(thisRun.players.data[0].id)) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
-    // Subcategory information
-    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true);
-    let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')';
+    // Subcategory information TODO
+    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true); //change to array
+    let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')'; //if length not zero, loop through, set name, search parameter for leaderboard
     let runRank;
     let categoryName = '';
-    if (thisRun.category.data.type === 'per-level') {
-      categoryName = thisRun.level.data.name + ' (' + thisRun.category.data.name + ')';
+    if (thisRun.category.data.type === 'per-level') { //change to ternary for two differences
+      categoryName = thisRun.level.data.name + ': ' + thisRun.category.data.name;
       const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level, thisRun.category.data.id);
       let foundRun = levelLeaderboard.find(r => r.run.id === thisRun.id);
       runRank = foundRun === undefined ? 'N/A' : foundRun.place;
@@ -459,7 +471,7 @@ client.setInterval(async () => {
     const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true);
     let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')';
     // Per-level information
-    let categoryName = thisRun.category.data.type === 'per-level' ? thisRun.level.data.name + ' (' + thisRun.category.data.name + ')' : thisRun.category.data.name;
+    let categoryName = thisRun.category.data.type === 'per-level' ? thisRun.level.data.name + ': ' + thisRun.category.data.name : thisRun.category.data.name;
     // Create Discord embed
     const embed = new Discord.MessageEmbed()
       .setColor('#2A89E7')
