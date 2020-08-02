@@ -6,33 +6,35 @@ It sends information on recently verified speedruns for any game or runner (on s
 
 ![Screenshot of embed](static/screenshot2.png)
 
-Additionally, it can DM you recent submissions for any game.
+It can also DM you recent submissions for any game.
 
 ## Setting Up Verified Runs
 
-Once RUN GET is in your server, you need to assign it a channel to send messages to, and tell it one or more games or runners to watch. Simply send a message mentioning RUN GET, mention the channel you want RUN GET to post in, and any number of games or runners you want it to watch.
+1. Invite RUN GET to your server
+2. Make sure it can read messages and send embeds
+3. Have the server owner send a message like `@RUN GET #any-text-channel game`
+
+Notes:
+
+* Games must be the abbreviation from speedrun.com (example: Kirby's Dream Land is `speedrun.com/kdl`, so you would use `kdl` as the game)
+* Runners must end with an `*` to differentiate them from games (if the runner has their Twitch account linked to speedrun.com, you can use that)
+* You can input multiple games and runners at once, but only one channel
+* If you want to remove a game or runner, put a `!` before the game or runner
+* Send the message `?rungetgames` to get a list of all games and runners being monitored (put an `!` at the end to get the channels, too)
 
 ![Screenshot of setup](static/screenshot1.png)
 
-In order to identify a game, send the game abbreviation from speedrun.com. For instance, if you want RUN GET to watch for new The Legend of Zelda: A Link to the Past runs, and you know the leaderboard is `https://www.speedrun.com/alttp`, then you'd use `alttp`.
+## Setting Up Submitted Runs
 
-In order to identify a runner, send the speedrun.com user name (or Twitch user name, if you've linked it to speedrun.com) with an `*` at the end, such as `dadinfinitum*`.
+1. Be in a server with RUN GET and start a DM
+2. Send a direct message like `@RUN GET game`
 
-You must only mention one channel in your message. However, you can include more than one game or runner. If you want to remove a game, add a `!` before the game abbreviation, like `!alttp`.
+Notes:
 
-If you want to know what games are being watched by RUN GET, just type `?rungetgames`. If you want the list to include the channels, add a `!` to the end: `?rungetgames!`.
-
-**Important Note:** Only server owners can set up RUN GET. Additionally, make sure the bot has permission to send embeds.
-
-## Setting up Submitted Runs
-
-There are two ways to have RUN GET send you new submissions for any particular game.
-
-You can DM the bot with game abbreviations, just as you would to get verified runs. This includes using `!` to remove a game.
-
-You can DM the bot your speedrun.com user name (or Twitch user name, if you've linked it to speedrun.com) with an `*` at the end, such as `dadinfinitum*`. The bot will search for your name on speedrun.com, then add all games that you are a moderator for.
-
-The `?rungetgames` command works via DM, and will return all games that are being watched by RUN GET.
+* Games must be formatted like when setting up verified runs
+* You can specify a user (with an `*` at the end of the name) and RUN GET will automatically add all games that user moderates
+* Like before, to remove a game, put a `!` before the game
+* The message `?rungetgames` works here, too
 
 ## Running the Bot Yourself
 
@@ -48,6 +50,8 @@ Want to be able to look up speedrunning world records and personal bests in your
 
 ## Changelog
 
+1 August 2020 - Multiple sub-categories are now read properly.
+
 31 July 2020 - Updated naming of per-level runs.
 
 28 July 2020 - Bot can now watch for verified runs from specific runners.
@@ -59,3 +63,7 @@ Want to be able to look up speedrunning world records and personal bests in your
 13 July 2020 - Added `?rungetgames` command. Adding multiple games doesn't short circuit if there's a duplicate.
 
 12 July 2020 - Initial release.
+
+### Special Thanks
+
+Shout out to the [Mobile Speedrunning Discord](https://discord.gg/57fgvS2) for assisting me in testing the bot and suggesting new features.

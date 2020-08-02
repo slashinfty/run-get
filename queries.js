@@ -25,8 +25,8 @@ module.exports = {
     const object = await response.json();
     return object.data;
   },
-  levelLB: async (game, level, category) => {
-    const response = await fetch(`https://www.speedrun.com/api/v1/leaderboards/${game}/level/${level}/${category}`);
+  levelLB: async (game, level, category, subcategory) => {
+    const response = await fetch(`https://www.speedrun.com/api/v1/leaderboards/${game}/level/${level}/${category}${subcategory}`);
     const object = await response.json();
     return object.data.runs;
   },

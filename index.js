@@ -136,7 +136,7 @@ client.on('message', async message => {
     const lengthCheck = (existing, next, msg) => {
       const content = existing + next;
       if (content.length >= 2000) {
-        message.reply(existing);
+        msg.reply(existing);
         return 'Currently watching:';
       } else {
         return existing;
@@ -411,30 +411,36 @@ client.setInterval(async () => {
     if (!verifiedGames.includes(thisRun.game.data.id) && !runnerNames.includes(thisRun.players.data[0].id)) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
-    // Subcategory information TODO
-    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true); //change to array
-    let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')'; //if length not zero, loop through, set name, search parameter for leaderboard
-    let runRank;
-    let categoryName = '';
-    if (thisRun.category.data.type === 'per-level') { //change to ternary for two differences
+    // Subcategory information
+    const runVariables = Object.entries(thisRun.values);
+    let subcategoryName = '';
+    let subcategoryQuery = '';
+    runVariables.forEach(v => {
+      const foundVariable = thisRun.category.data.variables.data.find(c => c.id === v[0]);
+      if (foundVariable['is-subcategory'] === true) {
+        subcategoryName += subcategoryName === '' ? foundVariable.values.values[v[1]].label : ', ' + foundVariable.values.values[v[1]].label;
+        subcategoryQuery += subcategoryQuery === '' ? '?var-' + v[0] + '=' + v[1] : '&var-' + v[0] + '=' + v[1];
+      }
+    });
+    subcategoryName = subcategoryName === '' ? '' : ' - ' + subcategoryName;
+    let categoryName, foundRun;
+    if (thisRun.category.data.type === 'per-level') {
       categoryName = thisRun.level.data.name + ': ' + thisRun.category.data.name;
-      const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level, thisRun.category.data.id);
-      let foundRun = levelLeaderboard.find(r => r.run.id === thisRun.id);
-      runRank = foundRun === undefined ? 'N/A' : foundRun.place;
+      const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level, thisRun.category.data.id, subcategoryQuery);
+      foundRun = levelLeaderboard.find(r => r.run.id === thisRun.id);
     } else {
       categoryName = thisRun.category.data.name;
-      const subCategoryVar = subCategoryObject !== undefined ? '?var-' + subCategoryObject.id + '=' + thisRun.values[subCategoryObject.id] : '';
-      const gameLeaderboard = await query.gameLB(thisRun.game.data.id, thisRun.category.data.id, subCategoryVar);
-      let foundRun = gameLeaderboard.find(r => r.run.id === thisRun.id);
-      runRank = foundRun === undefined ? 'N/A' : foundRun.place;
+      const gameLeaderboard = await query.gameLB(thisRun.game.data.id, thisRun.category.data.id, subcategoryQuery);
+      foundRun = gameLeaderboard.find(r => r.run.id === thisRun.id);
     }
+    const runRank = foundRun === undefined ? 'N/A' : foundRun.place;
     // Create Discord embed
     const embed = new Discord.MessageEmbed()
       .setColor('#2A89E7')
       .setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
       .setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
       .setURL(thisRun.weblink)
-      .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subCategory)
+      .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
       .addField('Leaderboard Rank:', runRank)
       .addField('Date Played:', thisRun.date)
       .setTimestamp();
@@ -468,8 +474,13 @@ client.setInterval(async () => {
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
     // Subcategory information
-    const subCategoryObject = thisRun.category.data.variables.data.find(v => v['is-subcategory'] === true);
-    let subCategory = subCategoryObject === undefined ? '' : ' (' + subCategoryObject.values.values[thisRun.values[subCategoryObject.id]].label + ')';
+    const runVariables = Object.entries(thisRun.values);
+    let subcategoryName = '';
+    runVariables.forEach(v => {
+      const foundVariable = thisRun.category.data.variables.data.find(c => c.id === v[0]);
+      if (foundVariable['is-subcategory'] === true) subcategoryName += subcategoryName === '' ? foundVariable.values.values[v[1]].label : ', ' + foundVariable.values.values[v[1]].label;
+    });
+    subcategoryName = subcategoryName === '' ? '' : ' - ' + subcategoryName;
     // Per-level information
     let categoryName = thisRun.category.data.type === 'per-level' ? thisRun.level.data.name + ': ' + thisRun.category.data.name : thisRun.category.data.name;
     // Create Discord embed
@@ -478,7 +489,7 @@ client.setInterval(async () => {
       .setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
       .setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
       .setURL(thisRun.weblink)
-      .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subCategory)
+      .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
       .addField('Date Played:', thisRun.date)
       .setTimestamp();
     // Get all users watching this game
