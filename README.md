@@ -14,6 +14,8 @@ It can also DM you recent submissions for any game.
 2. Make sure it can read messages and send embeds
 3. Have the server owner send a message like `@RUN GET #any-text-channel game`
 
+![Screenshot of setup](static/screenshot1.png)
+
 Notes:
 
 * Games must be the abbreviation from speedrun.com (example: Kirby's Dream Land is `speedrun.com/kdl`, so you would use `kdl` as the game)
@@ -21,8 +23,6 @@ Notes:
 * You can input multiple games and runners at once, but only one channel
 * If you want to remove a game or runner, put a `!` before the game or runner
 * Send the message `?rungetgames` to get a list of all games and runners being monitored (put an `!` at the end to get the channels, too)
-
-![Screenshot of setup](static/screenshot1.png)
 
 ## Setting Up Submitted Runs
 
