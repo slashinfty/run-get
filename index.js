@@ -164,7 +164,7 @@ client.on('message', async message => {
       }
       let replyString = 'Currently watching:';
       gamesArray.forEach(s => {
-        const nextMsg = message.content.endsWith('!') ? '\n' + s.gameName + ' in ' + s.channelName : '\n' + g.gameName;
+        const nextMsg = message.content.endsWith('!') ? '\n' + s.gameName + ' in ' + s.channelName : '\n' + s.gameName;
         replyString = lengthCheck(replyString, nextMsg, message)
         replyString += nextMsg;
       });
@@ -408,7 +408,13 @@ client.setInterval(async () => {
     // If the run was before last first checked run, quit (but update time!)
     if (verifyTime - verifiedCompareTime <= 0) break;
     // If this game isn't being watched, skip
-    if (!verifiedGames.includes(thisRun.game.data.id) && !runnerNames.includes(thisRun.players.data[0].id)) continue;
+    let thisRunner;
+    try {
+      thisRunner = runnerNames.includes(thisRun.players.data[0].id);
+    } catch (err) {
+      thisRunner = false;
+    }
+    if (!verifiedGames.includes(thisRun.game.data.id) && !thisRunner) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
     // Subcategory information
@@ -426,7 +432,7 @@ client.setInterval(async () => {
     let categoryName, foundRun;
     if (thisRun.category.data.type === 'per-level') {
       categoryName = thisRun.level.data.name + ': ' + thisRun.category.data.name;
-      const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level, thisRun.category.data.id, subcategoryQuery);
+      const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level.data.id, thisRun.category.data.id, subcategoryQuery);
       foundRun = levelLeaderboard.find(r => r.run.id === thisRun.id);
     } else {
       categoryName = thisRun.category.data.name;
