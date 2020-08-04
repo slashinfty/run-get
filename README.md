@@ -38,7 +38,7 @@ Notes:
 
 ## Running the Bot Yourself
 
-You will need Node.js (nvm is recommended) and yarn. Clone the repository, run `yarn install`, add your Discord API token to `config.js`, then `node index.js` to start the bot.
+You will need Node.js (nvm is recommended) and yarn. Clone the [repository](https://github.com/slashinfty/run-get), run `yarn install`, add your Discord API token to `config.js`, then `node index.js` to start the bot.
 
 ## Problems?
 
