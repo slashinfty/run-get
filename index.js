@@ -10,6 +10,9 @@ client.login(config.token);
 // Time of first run at last query
 let verifiedCompareTime;
 let submittedCompareTime;
+// Most recent runs
+let mostRecentVerified = [];
+let mostRecentSubmitted = [];
 // Server and game information
 let servers;
 let verifiedGames;
@@ -415,6 +418,7 @@ client.setInterval(async () => {
       thisRunner = false;
     }
     if (!verifiedGames.includes(thisRun.game.data.id) && !thisRunner) continue;
+    if (mostRecentVerified.includes(thisRun.id)) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
     // Subcategory information
@@ -450,6 +454,9 @@ client.setInterval(async () => {
       .addField('Leaderboard Rank:', runRank)
       .addField('Date Played:', thisRun.date)
       .setTimestamp();
+    // Add run to most recent array
+    if (mostRecentVerified.length === 10) mostRecentVerified.shift();
+    mostRecentVerified.push(thisRun.id);
     // Get all channels watching this game
     let serverChannels = servers.filter(s => s.game === thisRun.game.data.id).map(c => c.channel);
     let runnerChannels = runners.filter(r => r.runner === thisRun.players.data[0].id).map(c => c.channel);
@@ -458,6 +465,7 @@ client.setInterval(async () => {
     for (let j = 0; j < channels.length; j++) {
       const thisChannel = await client.channels.fetch(channels[j]);
       await thisChannel.send(embed).then(msg => verifiedCompareTime = newVerifyTime);
+      console.log('sending to channel: ' + thisChannel.id);
     }
   }
   // Update time to check
@@ -477,6 +485,7 @@ client.setInterval(async () => {
     // If the run was before last first checked run, quit (but update time!)
     if (submitTime - submittedCompareTime <= 0) break;
     if (!submittedGames.includes(thisRun.game.data.id)) continue;
+    if (mostRecentSubmitted.includes(thisRun.id)) continue;
     // Name of the runner
     const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
     // Subcategory information
@@ -498,6 +507,9 @@ client.setInterval(async () => {
       .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
       .addField('Date Played:', thisRun.date)
       .setTimestamp();
+    // Add run to most recent array
+    if (mostRecentSubmitted.length === 10) mostRecentSubmitted.shift();
+    mostRecentSubmitted.push(thisRun.id);
     // Get all users watching this game
     let usersWatching = users.filter(u => u.game === thisRun.game.data.id).map(u => u.channel);
     // Send message
