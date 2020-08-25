@@ -200,7 +200,7 @@ client.on('message', async message => {
           message.author.send(srcResult);
           return;
         }
-        userName = srcResult.user;
+        userName = srcResult.name;
         userId = srcResult.id;
       }
       message.author.send('Found user named ' + userName);
