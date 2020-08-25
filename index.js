@@ -206,7 +206,7 @@ client.on('message', async message => {
       message.author.send('Found user named ' + userName);
       const moderateArray = await query.moderatedGames(userId);
       for (let i = 0; i < moderateArray.length; i++) {
-        const existing = users.find(u => u.channel === message.author.id && u.game === gameID);
+        const existing = users.find(u => u.channel === message.author.id && u.game === moderateArray[i].id);
         if (existing !== undefined) {
           message.author.send('I am already watching for ' + moderateArray[i].names.international + ' for you');
           continue;
