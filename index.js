@@ -182,7 +182,7 @@ client.on('message', async message => {
   
   // Message must mention the bot and the user
   if (message.channel.type === 'dm' && message.author.id != client.user.id) {
-    const submittedGamesArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b\*?/g);
+    const submittedGamesArray = message.content.match(/\!?\b(?<!\<)[\w\-]+(?!\>)\b\*?/g);
     if (submittedGamesArray === null) {
       message.author.send('No game/user submitted.');
       return;
@@ -270,7 +270,7 @@ client.on('message', async message => {
   // Message must mention the bot, be from the server owner, and mention exactly 1 channel
   if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 1) {
     // The game abbreviations included in the message
-    const gameAbbreviationArray = message.content.match(/\!?\b(?<!\<)\w+(?!\>)\b\*?/g);
+    const gameAbbreviationArray = message.content.match(/\!?\b(?<!\<)[\w\-]+(?!\>)\b\*?/g);
     if (gameAbbreviationArray === null) {
       message.reply('Missing parameters.');
       return;
@@ -377,6 +377,20 @@ client.on('message', async message => {
         }
       }
     }
+  }
+
+  if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 0) {	
+    const newNickArray = message.content.match(/\!?\b(?<!\<)([^\<\>]\s?)+(?!\>)\b\*?/g);	
+    if (newNickArray === null) {	
+      message.reply('Missing parameters.');	
+      return;	
+    }	
+    const nickCheck = newNickArray.find(e => e.includes('!nick'));	
+    if (nickCheck === undefined) return;	
+    const self = message.guild.me;	
+    const newNick = nickCheck.replace('!nick','').trim();	
+    self.setNickname(newNick);	
+    message.reply('Nickname updated!');	
   }
 });
 
