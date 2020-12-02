@@ -267,8 +267,8 @@ client.on('message', async message => {
     return;
   }
   
-  // Message must mention the bot, be from the server owner, and mention exactly 1 channel
-  if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 1) {
+  // Message must mention the bot, be from a server administrator, and mention exactly 1 channel
+  if (message.mentions.users.has(client.user.id) && message.member.hasPermission("ADMINISTRATOR") && message.mentions.channels.size === 1) {
     // The game abbreviations included in the message
     const gameAbbreviationArray = message.content.match(/\!?\b(?<!\<)[\w\-]+(?!\>)\b\*?/g);
     if (gameAbbreviationArray === null) {
@@ -379,7 +379,7 @@ client.on('message', async message => {
     }
   }
 
-  if (message.mentions.users.has(client.user.id) && message.member.id === message.guild.ownerID && message.mentions.channels.size === 0) {	
+  if (message.mentions.users.has(client.user.id) && message.member.hasPermission("ADMINISTRATOR") && message.mentions.channels.size === 0) {	
     const newNickArray = message.content.match(/\!?\b(?<!\<)([^\<\>]\s?)+(?!\>)\b\*?/g);	
     if (newNickArray === null) {	
       message.reply('Missing parameters.');	
@@ -479,7 +479,6 @@ client.setInterval(async () => {
     for (let j = 0; j < channels.length; j++) {
       const thisChannel = await client.channels.fetch(channels[j]);
       await thisChannel.send(embed).then(msg => verifiedCompareTime = newVerifyTime);
-      console.log('sending to channel: ' + thisChannel.id);
     }
   }
   // Update time to check
