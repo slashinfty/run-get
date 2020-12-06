@@ -133,9 +133,9 @@ client.once('ready', () => {
 // Messages to add game watch to a server
 client.on('message', async message => {
   // Help reply
-  if (message.content === '?rungethelp' || message.content.includes(`<@${client.user.id}>`) || message.content.includes(`<@!${client.user.id}>`) && message.content.includes('help')) message.reply('Need help with RUN GET? https://slashinfty.github.io/run-get');
+  if ((message.content === '?rungethelp' || message.mentions.users.has(client.user.id)) && message.content.includes('help')) message.reply('Need help with RUN GET? https://slashinfty.github.io/run-get');
   
-  if (message.content === '?rungetgames' || message.content === '?rungetgames!' || message.content.includes(`<@${client.user.id}>`) || message.content.includes(`<@!${client.user.id}>`) && message.content.includes('games')) {
+  if ((message.content === '?rungetgames' || message.content === '?rungetgames!' || message.mentions.users.has(client.user.id)) && message.content.includes('games')) {
     const lengthCheck = (existing, next, msg) => {
       const content = existing + next;
       if (content.length >= 2000) {
