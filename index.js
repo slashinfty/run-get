@@ -495,7 +495,7 @@ client.setInterval(async () => {
     let newSubmitTime;
     // Get 200 most recent submitted runs
     submit: do {
-        const recentSubmit = await query.submittedRuns();
+        const recentSubmit = await query.submittedRuns(q);
         for (let i = 0; i < recentSubmit.length; i++) {
 	        const thisRun = recentSubmit[i];
 	        // When run was submitted
