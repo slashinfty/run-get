@@ -410,127 +410,143 @@ client.on('guildDelete', guild => {
 
 // Core function
 client.setInterval(async () => {
-	// Get 20 most recent verified runs
-	const recentVerified = await query.verifiedRuns();
-	let newVerifyTime;
-	for (let i = 0; i < recentVerified.length; i++) {
-		const thisRun = recentVerified[i];
-		// When run was verified
-		const verifyTime = await new Date(thisRun.status['verify-date']);
-		// Update time to check if it's the first run
-		if (i === 0) {
-			if (verifiedCompareTime === undefined) verifiedCompareTime = verifyTime;
-			newVerifyTime = verifyTime;
-		}
-		// If the run was before last first checked run, quit (but update time!)
-		if (verifyTime - verifiedCompareTime <= 0) break;
-		// If this game isn't being watched, skip
-		let thisRunner;
-		try {
-			thisRunner = runnerNames.includes(thisRun.players.data[0].id);
-		} catch (err) {
-			thisRunner = false;
-		}
-		if (!verifiedGames.includes(thisRun.game.data.id) && !thisRunner) continue;
-		if (mostRecentVerified.includes(thisRun.id)) continue;
-		// Name of the runner
-		const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
-		// Subcategory information
-		const runVariables = Object.entries(thisRun.values);
-		let subcategoryName = '';
-		let subcategoryQuery = '';
-		runVariables.forEach(v => {
-			const foundVariable = thisRun.category.data.variables.data.find(c => c.id === v[0]);
-			if (foundVariable['is-subcategory'] === true) {
-				subcategoryName += subcategoryName === '' ? foundVariable.values.values[v[1]].label : ', ' + foundVariable.values.values[v[1]].label;
-				subcategoryQuery += subcategoryQuery === '' ? '?var-' + v[0] + '=' + v[1] : '&var-' + v[0] + '=' + v[1];
-			}
-		});
-		subcategoryName = subcategoryName === '' ? '' : ' - ' + subcategoryName;
-		let categoryName, foundRun;
-		if (thisRun.category.data.type === 'per-level') {
-			categoryName = thisRun.level.data.name + ': ' + thisRun.category.data.name;
-			const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level.data.id, thisRun.category.data.id, subcategoryQuery);
-			foundRun = levelLeaderboard.find(r => r.run.id === thisRun.id);
-		} else {
-			categoryName = thisRun.category.data.name;
-			const gameLeaderboard = await query.gameLB(thisRun.game.data.id, thisRun.category.data.id, subcategoryQuery);
-			foundRun = gameLeaderboard.find(r => r.run.id === thisRun.id);
-		}
-		const runRank = foundRun === undefined ? 'N/A' : foundRun.place;
-		// Create Discord embed
-		const embed = new Discord.MessageEmbed()
-			.setColor('#2A89E7')
-			.setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
-			.setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
-			.setURL(thisRun.weblink)
-			.setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
-			.addField('Leaderboard Rank:', runRank)
-			.addField('Date Played:', thisRun.date)
-			.setTimestamp();
-		// Add run to most recent array
-		if (mostRecentVerified.length === 10) mostRecentVerified.shift();
-		mostRecentVerified.push(thisRun.id);
-		// Get all channels watching this game
-		let serverChannels = servers.filter(s => s.game === thisRun.game.data.id).map(c => c.channel);
-		let runnerChannels = runners.filter(r => r.runner === thisRun.players.data[0].id).map(c => c.channel);
-		let channels = serverChannels.concat(runnerChannels);
-		// Send message
-		for (let j = 0; j < channels.length; j++) {
-			const thisChannel = await client.channels.fetch(channels[j]);
-			await thisChannel.send(embed).then(msg => verifiedCompareTime = newVerifyTime);
-		}
-	}
+    let p = 0;
+    let newVerifyTime;
+    // Get 200 most recent verified runs
+    verify: do {
+	    const recentVerified = await query.verifiedRuns(p);
+	    for (let i = 0; i < recentVerified.length; i++) {
+		    const thisRun = recentVerified[i];
+		    // When run was verified
+		    const verifyTime = await new Date(thisRun.status['verify-date']);
+		    // Update time to check if it's the first run
+		    if (i === 0) {
+			    if (verifiedCompareTime === undefined) verifiedCompareTime = verifyTime;
+			    newVerifyTime = verifyTime;
+		    }
+		    // If the run was before last first checked run, quit (but update time!)
+		    if (verifyTime - verifiedCompareTime <= 0) continue;
+		    // If this game isn't being watched, skip
+		    let thisRunner;
+		    try {
+			    thisRunner = runnerNames.includes(thisRun.players.data[0].id);
+		    } catch (err) {
+			    thisRunner = false;
+		    }
+		    if (!verifiedGames.includes(thisRun.game.data.id) && !thisRunner) continue;
+		    if (mostRecentVerified.includes(thisRun.id)) continue;
+		    // Name of the runner
+		    const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
+		    // Subcategory information
+		    const runVariables = Object.entries(thisRun.values);
+		    let subcategoryName = '';
+		    let subcategoryQuery = '';
+		    runVariables.forEach(v => {
+			    const foundVariable = thisRun.category.data.variables.data.find(c => c.id === v[0]);
+			    if (foundVariable['is-subcategory'] === true) {
+				    subcategoryName += subcategoryName === '' ? foundVariable.values.values[v[1]].label : ', ' + foundVariable.values.values[v[1]].label;
+				    subcategoryQuery += subcategoryQuery === '' ? '?var-' + v[0] + '=' + v[1] : '&var-' + v[0] + '=' + v[1];
+			    }
+		    });
+		    subcategoryName = subcategoryName === '' ? '' : ' - ' + subcategoryName;
+		    let categoryName, foundRun;
+		    if (thisRun.category.data.type === 'per-level') {
+			    categoryName = thisRun.level.data.name + ': ' + thisRun.category.data.name;
+			    const levelLeaderboard = await query.levelLB(thisRun.game.data.id, thisRun.level.data.id, thisRun.category.data.id, subcategoryQuery);
+			    foundRun = levelLeaderboard.find(r => r.run.id === thisRun.id);
+		    } else {
+			    categoryName = thisRun.category.data.name;
+			    const gameLeaderboard = await query.gameLB(thisRun.game.data.id, thisRun.category.data.id, subcategoryQuery);
+			    foundRun = gameLeaderboard.find(r => r.run.id === thisRun.id);
+		    }
+		    const runRank = foundRun === undefined ? 'N/A' : foundRun.place;
+		    // Create Discord embed
+		    const embed = new Discord.MessageEmbed()
+			    .setColor('#2A89E7')
+			    .setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
+			    .setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
+			    .setURL(thisRun.weblink)
+			    .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
+			    .addField('Leaderboard Rank:', runRank)
+			    .addField('Date Played:', thisRun.date)
+			    .setTimestamp();
+		    // Add run to most recent array
+		    if (mostRecentVerified.length === 400) mostRecentVerified.shift();
+		    mostRecentVerified.push(thisRun.id);
+		    // Get all channels watching this game
+		    let serverChannels = servers.filter(s => s.game === thisRun.game.data.id).map(c => c.channel);
+		    let runnerChannels = runners.filter(r => r.runner === thisRun.players.data[0].id).map(c => c.channel);
+		    let channels = serverChannels.concat(runnerChannels);
+		    // Send message
+		    for (let j = 0; j < channels.length; j++) {
+			    const thisChannel = await client.channels.fetch(channels[j]);
+                try {
+			        await thisChannel.send(embed).then(msg => verifiedCompareTime = newVerifyTime);
+                } catch (e) {
+                    console.error(e);
+                }
+		    }
+	    }
+        p++;
+    } while (p < 10);
 	// Update time to check
 	verifiedCompareTime = newVerifyTime;
-	// Get 20 most recent submitted runs
-	const recentSubmit = await query.submittedRuns();
-	let newSubmitTime;
-	for (let i = 0; i < recentSubmit.length; i++) {
-		const thisRun = recentSubmit[i];
-		// When run was submitted
-		const submitTime = await new Date(thisRun.submitted);
-		// Update time to check if it's the first run
-		if (i === 0) {
-			if (submittedCompareTime === undefined) submittedCompareTime = submitTime;
-			newSubmitTime = submitTime;
-		}
-		// If the run was before last first checked run, quit (but update time!)
-		if (submitTime - submittedCompareTime <= 0) break;
-		if (!submittedGames.includes(thisRun.game.data.id)) continue;
-		if (mostRecentSubmitted.includes(thisRun.id)) continue;
-		// Name of the runner
-		const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
-		// Subcategory information
-		const runVariables = Object.entries(thisRun.values);
-		let subcategoryName = '';
-		runVariables.forEach(v => {
-			const foundVariable = thisRun.category.data.variables.data.find(c => c.id === v[0]);
-			if (foundVariable['is-subcategory'] === true) subcategoryName += subcategoryName === '' ? foundVariable.values.values[v[1]].label : ', ' + foundVariable.values.values[v[1]].label;
-		});
-		subcategoryName = subcategoryName === '' ? '' : ' - ' + subcategoryName;
-		// Per-level information
-		let categoryName = thisRun.category.data.type === 'per-level' ? thisRun.level.data.name + ': ' + thisRun.category.data.name : thisRun.category.data.name;
-		// Create Discord embed
-		const embed = new Discord.MessageEmbed()
-			.setColor('#2A89E7')
-			.setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
-			.setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
-			.setURL(thisRun.weblink)
-			.setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
-			.addField('Date Played:', thisRun.date)
-			.setTimestamp();
-		// Add run to most recent array
-		if (mostRecentSubmitted.length === 10) mostRecentSubmitted.shift();
-		mostRecentSubmitted.push(thisRun.id);
-		// Get all users watching this game
-		let usersWatching = users.filter(u => u.game === thisRun.game.data.id).map(u => u.channel);
-		// Send message
-		for (let j = 0; j < usersWatching.length; j++) {
-			const thisUser = await client.users.fetch(usersWatching[j]);
-			await thisUser.send(embed).then(msg => submittedCompareTime = newSubmitTime);
-		}
-	}
+    let q = 0;
+    let newSubmitTime;
+    // Get 200 most recent submitted runs
+    submit: do {
+        const recentSubmit = await query.submittedRuns();
+        for (let i = 0; i < recentSubmit.length; i++) {
+	        const thisRun = recentSubmit[i];
+	        // When run was submitted
+	        const submitTime = await new Date(thisRun.submitted);
+	        // Update time to check if it's the first run
+	        if (i === 0) {
+		        if (submittedCompareTime === undefined) submittedCompareTime = submitTime;
+		        newSubmitTime = submitTime;
+	        }
+	        // If the run was before last first checked run, quit (but update time!)
+	        if (submitTime - submittedCompareTime <= 0) continue;
+	        if (!submittedGames.includes(thisRun.game.data.id)) continue;
+	        if (mostRecentSubmitted.includes(thisRun.id)) continue;
+	        // Name of the runner
+	        const runnerName = thisRun.players.data[0].rel === 'user' ? thisRun.players.data[0].names.international : thisRun.players.data[0].name;
+	        // Subcategory information
+	        const runVariables = Object.entries(thisRun.values);
+	        let subcategoryName = '';
+	        runVariables.forEach(v => {
+		        const foundVariable = thisRun.category.data.variables.data.find(c => c.id === v[0]);
+		        if (foundVariable['is-subcategory'] === true) subcategoryName += subcategoryName === '' ? foundVariable.values.values[v[1]].label : ', ' + foundVariable.values.values[v[1]].label;
+	        });
+	        subcategoryName = subcategoryName === '' ? '' : ' - ' + subcategoryName;
+	        // Per-level information
+	        let categoryName = thisRun.category.data.type === 'per-level' ? thisRun.level.data.name + ': ' + thisRun.category.data.name : thisRun.category.data.name;
+	        // Create Discord embed
+	        const embed = new Discord.MessageEmbed()
+		        .setColor('#2A89E7')
+		        .setTitle(convert(thisRun.times.primary_t) + ' by ' + runnerName)
+		        .setThumbnail(thisRun.game.data.assets['cover-medium'].uri)
+		        .setURL(thisRun.weblink)
+		        .setAuthor(thisRun.game.data.names.international + ' - ' + categoryName + subcategoryName)
+		        .addField('Date Played:', thisRun.date)
+		        .setTimestamp();
+	        // Add run to most recent array
+	        if (mostRecentSubmitted.length === 400) mostRecentSubmitted.shift();
+	        mostRecentSubmitted.push(thisRun.id);
+	        // Get all users watching this game
+	        let usersWatching = users.filter(u => u.game === thisRun.game.data.id).map(u => u.channel);
+	        // Send message
+	        for (let j = 0; j < usersWatching.length; j++) {
+		        const thisUser = await client.users.fetch(usersWatching[j]);
+                try {
+    		        await thisUser.send(embed).then(msg => submittedCompareTime = newSubmitTime);
+                } catch (e) {
+                    console.error(e);
+                }
+	        }
+        }
+        q++;
+    } while (q < 10);
 	// Update time to check
 	submittedCompareTime = newSubmitTime;
-}, 6e4); // 60 seconds
+}, 3e5); // 5 minutes

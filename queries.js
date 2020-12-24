@@ -20,8 +20,9 @@ module.exports = {
     const object = await response.json();
     return object.data.length === 0 ? undefined : object.data[0];
   },
-  verifiedRuns: async () => {
-    const response = await fetch(`https://www.speedrun.com/api/v1/runs?status=verified&orderby=verify-date&direction=desc&embed=game,category.variables,players,level`);
+  verifiedRuns: async page => {
+    const offset = page === 0 ? '' : '&offset=' + (20 * page).toString();
+    const response = await fetch(`https://www.speedrun.com/api/v1/runs?status=verified&orderby=verify-date&direction=desc&embed=game,category.variables,players,level${offset}`);
     const object = await response.json();
     return object.data;
   },
@@ -35,8 +36,9 @@ module.exports = {
     const object = await response.json();
     return object.data.runs;
   },
-  submittedRuns: async () => {
-    const response = await fetch(`https://www.speedrun.com/api/v1/runs?status=new&orderby=submitted&direction=desc&embed=game,category.variables,players,level`);
+  submittedRuns: async page => {
+    const offset = page === 0 ? '' : '&offset=' + (20 * page).toString();
+    const response = await fetch(`https://www.speedrun.com/api/v1/runs?status=new&orderby=submitted&direction=desc&embed=game,category.variables,players,level${offset}`);
     const object = await response.json();
     return object.data;
   }

@@ -50,6 +50,8 @@ Want to be able to look up speedrunning world records and personal bests in your
 
 ## Changelog
 
+23 December 2020 - Querying multiple pages at once due to SRC API caching.
+
 1 August 2020 - Multiple sub-categories are now read properly.
 
 31 July 2020 - Updated naming of per-level runs.
